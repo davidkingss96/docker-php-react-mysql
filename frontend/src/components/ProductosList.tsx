@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import ProductoForm from './ProductoForm';
 import productoService from '../services/productoService';
-import { Button, Table, Spinner, Alert } from 'react-bootstrap';
+import { Button, Table, Spinner, Alert, Modal } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 const ProductosList = () => {
     const [productos, setProductos] = useState([]);
@@ -9,6 +10,9 @@ const ProductosList = () => {
     const [error, setError] = useState(null);
     const [mostrarModal, setMostrarModal] = useState(false);
     const [productoEditando, setProductoEditando] = useState(null);
+
+    const [productoAEliminar, setProductoAEliminar] = useState(null);
+    const [eliminandoId, setEliminandoId] = useState(null);
 
     useEffect(() => {
         fetchProductos();
@@ -34,13 +38,19 @@ const ProductosList = () => {
         setProductos(productos.map(prod => prod.id === productoEditado.id ? productoEditado : prod));
     };
 
-    const handleEliminarProducto = async (id) => {
+    const confirmarEliminarProducto = async (id) => {
+        setEliminandoId(id);
         try {
             await productoService.eliminar(id);
             setProductos(productos.filter(producto => producto.id !== id));
+            toast.success('Producto eliminado correctamente');
         } catch (error) {
             console.error('Error eliminando producto:', error);
             setError(error.message);
+            toast.error('Ocurrió un error al eliminar el producto');
+        } finally {
+            setEliminandoId(null);
+            setProductoAEliminar(null);
         }
     };
 
@@ -85,11 +95,24 @@ const ProductosList = () => {
                                     <td>${producto.precio}</td>
                                     <td>{producto.cantidad}</td>
                                     <td>
-                                        <Button variant="secondary" size="sm" className="me-2" onClick={() => handleAbrirModalParaEditar(producto)}>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="me-2"
+                                            onClick={() => handleAbrirModalParaEditar(producto)}
+                                            disabled={!!eliminandoId}
+                                        >
                                             Editar
                                         </Button>
-                                        <Button variant="danger" size="sm" onClick={() => handleEliminarProducto(producto.id)}>
-                                            Eliminar
+                                        <Button
+                                            variant="danger"
+                                            size="sm"
+                                            onClick={() => setProductoAEliminar(producto)}
+                                            disabled={!!eliminandoId}
+                                        >
+                                            {eliminandoId === producto.id ? (
+                                                <Spinner animation="border" size="sm" />
+                                            ) : 'Eliminar'}
                                         </Button>
                                     </td>
                                 </tr>
@@ -112,6 +135,31 @@ const ProductosList = () => {
                     onProductoEditado={handleProductoEditado}
                     onClose={handleCerrarModal}
                 />
+            )}
+
+            {productoAEliminar && (
+                <Modal show onHide={() => setProductoAEliminar(null)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirmar eliminación</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        ¿Estás seguro de que deseas eliminar <strong>{productoAEliminar.nombre}</strong>?
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setProductoAEliminar(null)} disabled={!!eliminandoId}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="danger"
+                            onClick={() => confirmarEliminarProducto(productoAEliminar.id)}
+                            disabled={!!eliminandoId}
+                        >
+                            {eliminandoId === productoAEliminar.id ? (
+                                <Spinner animation="border" size="sm" />
+                            ) : 'Eliminar'}
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             )}
         </div>
     );

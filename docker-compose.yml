@@ -28,7 +28,6 @@ services:
     networks:
       - backend
     volumes:
-      - ./app:/var/www/html
       - ./.env:/var/www/html/.env
 
   frontend:

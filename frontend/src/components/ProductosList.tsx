@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import ProductoForm from './ProductoForm';
+import productoService from '../services/productoService';
+import { Button, Table, Spinner, Alert } from 'react-bootstrap';
 
 const ProductosList = () => {
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [mostrarModal, setMostrarModal] = useState(false);
     const [productoEditando, setProductoEditando] = useState(null);
 
     useEffect(() => {
@@ -14,12 +16,8 @@ const ProductosList = () => {
 
     const fetchProductos = async () => {
         try {
-            const response = await fetch('/api/productos');
-            if (!response.ok) {
-                throw new Error('Error al obtener productos');
-            }
-            const data = await response.json();
-            setProductos(data.productos);
+            const data = await productoService.listar();
+            setProductos(data);
         } catch (error) {
             console.error('Error fetching productos:', error);
             setError(error.message);
@@ -30,71 +28,89 @@ const ProductosList = () => {
 
     const handleProductoCreado = (nuevoProducto) => {
         setProductos([...productos, nuevoProducto]);
-        setMostrarFormulario(false);
     };
 
     const handleProductoEditado = (productoEditado) => {
         setProductos(productos.map(prod => prod.id === productoEditado.id ? productoEditado : prod));
-        setProductoEditando(null);
-        setMostrarFormulario(false);
     };
 
     const handleEliminarProducto = async (id) => {
         try {
-            const response = await fetch(`/api/productos/eliminar`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            });
-    
-            if (!response.ok) {
-                throw new Error('Error al eliminar producto');
-            }
-    
-            setProductos(prevProductos => prevProductos.filter(producto => producto.id !== id));
+            await productoService.eliminar(id);
+            setProductos(productos.filter(producto => producto.id !== id));
         } catch (error) {
             console.error('Error eliminando producto:', error);
             setError(error.message);
         }
     };
 
-    const handleEditarProducto = (producto) => {
-        setProductoEditando(producto);
-        setMostrarFormulario(true);
+    const handleAbrirModalParaNuevo = () => {
+        setProductoEditando(null);
+        setMostrarModal(true);
     };
 
-    if (mostrarFormulario) {
-        return <ProductoForm producto={productoEditando} onProductoCreado={handleProductoCreado} onProductoEditado={handleProductoEditado} />;
-    }
+    const handleAbrirModalParaEditar = (producto) => {
+        setProductoEditando(producto);
+        setMostrarModal(true);
+    };
 
-    if (loading) return <p className="text-center mt-5">Cargando productos...</p>;
-    if (error) return <p className="text-center mt-5 text-danger">Error: {error}</p>;
+    const handleCerrarModal = () => {
+        setMostrarModal(false);
+    };
 
     return (
-        <div className="container d-flex flex-column justify-content-center align-items-center vh-100">
-            <h1 className="mb-4">Lista de Productos</h1>
-            <ul className="list-group w-75">
-                {productos.map(producto => (
-                    <li key={producto.id} className="list-group-item">
-                        <div className="row">
-                            <div className="col-md-4">
-                                <h5 className="fw-bold">{producto.nombre}</h5>
-                            </div>
-                            <div className="col-md-4">
-                                <ul className="list-unstyled mb-0">
-                                    <li><strong>Precio:</strong> <span className="badge bg-success">${producto.precio}</span></li>
-                                    <li><strong>Cantidad:</strong> <span className="badge bg-primary">{producto.cantidad}</span></li>
-                                </ul>
-                            </div>
-                            <div className="col-md-4 d-flex justify-content-end">
-                                <button className="btn btn-secondary btn-sm me-2" onClick={() => handleEditarProducto(producto)}>Editar</button>
-                                <button className="btn btn-danger btn-sm" onClick={() => handleEliminarProducto(producto.id)}>Eliminar</button>
-                            </div>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-            <button className="btn btn-primary mt-3" onClick={() => { setMostrarFormulario(true); setProductoEditando(null); }}>Agregar Producto</button>
+        <div className="container mt-5">
+            <h1 className="mb-4 text-center">Lista de Productos</h1>
+
+            {loading && <div className="text-center"><Spinner animation="border" /></div>}
+            {error && <Alert variant="danger" className="text-center">{error}</Alert>}
+
+            {!loading && !error && (
+                <>
+                    <Table striped bordered hover responsive>
+                        <thead className="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Cantidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {productos.map(producto => (
+                                <tr key={producto.id}>
+                                    <td>{producto.nombre}</td>
+                                    <td>${producto.precio}</td>
+                                    <td>{producto.cantidad}</td>
+                                    <td>
+                                        <Button variant="secondary" size="sm" className="me-2" onClick={() => handleAbrirModalParaEditar(producto)}>
+                                            Editar
+                                        </Button>
+                                        <Button variant="danger" size="sm" onClick={() => handleEliminarProducto(producto.id)}>
+                                            Eliminar
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+
+                    <div className="text-center">
+                        <Button variant="primary" onClick={handleAbrirModalParaNuevo}>
+                            Agregar Producto
+                        </Button>
+                    </div>
+                </>
+            )}
+
+            {mostrarModal && (
+                <ProductoForm
+                    producto={productoEditando}
+                    onProductoCreado={handleProductoCreado}
+                    onProductoEditado={handleProductoEditado}
+                    onClose={handleCerrarModal}
+                />
+            )}
         </div>
     );
 };

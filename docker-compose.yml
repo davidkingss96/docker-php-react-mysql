@@ -1,0 +1,47 @@
+services:
+  # Servicio de MySQL
+  db:
+    image: mysql:latest
+    container_name: almacen-mysql
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password123
+      MYSQL_DATABASE: almacen
+      MYSQL_USER: almacen_user
+      MYSQL_PASSWORD: almacen_pass
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+
+  # Servicio de WordPress
+  php:
+    build: ./app
+    container_name: almacen-app
+    depends_on:
+      - db
+    ports:
+      - "8084:80"
+    restart: always
+    networks:
+      - backend
+
+  frontend:
+    build: ./frontend
+    container_name: almacen-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - php
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: always
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

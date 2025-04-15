@@ -1,0 +1,24 @@
+# Node modules del frontend
+/frontend/node_modules/
+
+# Dependencias de PHP (Composer)
+/app/vendor/
+
+# Archivos de log y temporales
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Salidas de compilación
+/frontend/build/
+/frontend/dist/
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Varios del sistema
+Thumbs.db
+.idea/
+.vscode/

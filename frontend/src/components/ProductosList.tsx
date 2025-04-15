@@ -70,6 +70,7 @@ const ProductosList = () => {
                     <Table striped bordered hover responsive>
                         <thead className="table-dark">
                             <tr>
+                                <th>ID</th>
                                 <th>Nombre</th>
                                 <th>Precio</th>
                                 <th>Cantidad</th>
@@ -79,6 +80,7 @@ const ProductosList = () => {
                         <tbody>
                             {productos.map(producto => (
                                 <tr key={producto.id}>
+                                    <td>{producto.id}</td>
                                     <td>{producto.nombre}</td>
                                     <td>${producto.precio}</td>
                                     <td>{producto.cantidad}</td>

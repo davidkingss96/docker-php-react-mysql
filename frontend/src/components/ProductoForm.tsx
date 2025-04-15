@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, Button, Form, Spinner } from 'react-bootstrap';
 import productoService from '../services/productoService';
+import { toast } from 'react-toastify';
 
 const ProductoForm = ({ producto, onProductoCreado, onProductoEditado, onClose }) => {
     const [id, setId] = useState(null);
@@ -39,9 +40,11 @@ const ProductoForm = ({ producto, onProductoCreado, onProductoEditado, onClose }
             if (id) {
                 data = await productoService.actualizar(nuevoProducto);
                 onProductoEditado(data);
+                toast.success('Producto actualizado correctamente');
             } else {
                 data = await productoService.guardar(nuevoProducto);
                 onProductoCreado(data);
+                toast.success('Producto creado correctamente');
             }
             onClose(); // ✅ cerrar modal
         } catch (error) {

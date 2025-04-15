@@ -1,13 +1,28 @@
 <?php
 // app/config/db.php
-$host = 'db'; // Nombre del servicio en docker-compose.yml
-$dbname = 'almacen';
-$user = 'almacen_user';
-$password = 'almacen_pass';
 
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo "Error de conexión: " . $e->getMessage();
-}
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Dotenv\Dotenv;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// Cargar las variables desde el .env (en la raíz del proyecto)
+$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
+// Crear instancia de Capsule (Eloquent ORM)
+$capsule = new Capsule;
+
+$capsule->addConnection([
+    'driver'    => $_ENV['DB_DRIVER'],
+    'host'      => $_ENV['DB_HOST'],
+    'database'  => $_ENV['DB_NAME'],
+    'username'  => $_ENV['DB_USER'],
+    'password'  => $_ENV['DB_PASS'],
+    'charset'   => 'utf8',
+    'collation' => 'utf8_unicode_ci',
+    'prefix'    => '',
+]);
+
+$capsule->setAsGlobal();
+$capsule->bootEloquent();

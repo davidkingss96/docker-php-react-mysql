@@ -22,8 +22,8 @@ class ProductoController
     // Guardar un nuevo producto
     public function guardar($data)
     {
-        if (!isset($data['nombre'], $data['precio'], $data['cantidad'])) {
-            echo json_encode(["error" => "Datos incompletos"]);
+        if (!$this->validarDatosProducto($data)) {
+            echo json_encode(["error" => "Datos inválidos o incompletos"]);
             http_response_code(400);
             return;
         }
@@ -42,11 +42,11 @@ class ProductoController
         ]);
     }
 
-    // Actualizar un producto
+    // Actualizar un producto existente
     public function actualizar($id, $data)
     {
-        if (!isset($data['nombre'], $data['precio'], $data['cantidad'])) {
-            echo json_encode(["error" => "Datos incompletos"]);
+        if (!$this->validarDatosProducto($data)) {
+            echo json_encode(["error" => "Datos inválidos o incompletos"]);
             http_response_code(400);
             return;
         }
@@ -68,11 +68,33 @@ class ProductoController
     // Eliminar un producto
     public function eliminar($id)
     {
+        if (!is_numeric($id)) {
+            http_response_code(400);
+            echo json_encode(["error" => "ID inválido"]);
+            return;
+        }
+
         $this->model->eliminarProducto($id);
+
         echo json_encode([
             "status" => "success",
             "message" => "Producto eliminado",
             "productoId" => $id
         ]);
+    }
+
+    // Función auxiliar para validar datos
+    private function validarDatosProducto($data)
+    {
+        if (
+            !isset($data['nombre'], $data['precio'], $data['cantidad']) ||
+            !is_string($data['nombre']) || trim($data['nombre']) === '' ||
+            !is_numeric($data['precio']) || $data['precio'] <= 0 ||
+            !is_numeric($data['cantidad']) || intval($data['cantidad']) < 0
+        ) {
+            return false;
+        }
+
+        return true;
     }
 }

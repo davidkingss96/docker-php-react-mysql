@@ -1,5 +1,7 @@
 {
     "require": {
-        "cboden/ratchet": "^0.4.4"
+        "cboden/ratchet": "^0.4.4",
+        "illuminate/database": "^12.8",
+        "vlucas/phpdotenv": "^5.6"
     }
 }
